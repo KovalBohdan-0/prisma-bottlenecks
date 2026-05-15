@@ -1,0 +1,368 @@
+{
+  "generatedAt": "2026-05-15T09:07:48.431Z",
+  "dataset": {
+    "users": 800,
+    "postsPerUser": 20,
+    "posts": 16000,
+    "orders": 200,
+    "products": 25
+  },
+  "results": [
+    {
+      "name": "N+1 queries",
+      "bad": {
+        "wall": {
+          "minMs": 2824.15,
+          "avgMs": 3002.86,
+          "p50Ms": 2826.23,
+          "p95Ms": 3180.55,
+          "maxMs": 3180.55
+        },
+        "service": {
+          "minMs": 1390,
+          "avgMs": 1494.75,
+          "p50Ms": 1425,
+          "p95Ms": 1616,
+          "maxMs": 1616
+        },
+        "statuses": {
+          "200": 4
+        },
+        "sampleResponse": {
+          "queryCount": 801,
+          "queryTime": 1548,
+          "warning": "ANTI-PATTERN: N+1 queries. Fired 801 SQL queries for 800 users. This explodes at scale."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 59.32,
+          "avgMs": 60.14,
+          "p50Ms": 60.08,
+          "p95Ms": 60.67,
+          "maxMs": 60.67
+        },
+        "service": {
+          "minMs": 25,
+          "avgMs": 27.5,
+          "p50Ms": 28,
+          "p95Ms": 29,
+          "maxMs": 29
+        },
+        "statuses": {
+          "200": 4
+        },
+        "sampleResponse": {
+          "queryCount": 2,
+          "queryTime": 28,
+          "info": "GOOD: Uses include. Fetched 800 users with posts in 2 queries. Prisma batches the posts lookup into a single IN clause."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 49.93,
+      "serviceSpeedup": 54.35
+    },
+    {
+      "name": "Sequential await",
+      "bad": {
+        "wall": {
+          "minMs": 8.91,
+          "avgMs": 14.76,
+          "p50Ms": 13.18,
+          "p95Ms": 24.81,
+          "maxMs": 24.81
+        },
+        "service": {
+          "minMs": 1,
+          "avgMs": 2.08,
+          "p50Ms": 2,
+          "p95Ms": 3,
+          "maxMs": 3
+        },
+        "statuses": {
+          "200": 12
+        },
+        "sampleResponse": {
+          "queryTime": 2,
+          "breakdown": {
+            "userCount": 800,
+            "postCount": 16000,
+            "orderCount": 200,
+            "productCount": 25,
+            "t1ms": 1,
+            "t2ms": 1,
+            "t3ms": 0,
+            "t4ms": 0
+          },
+          "warning": "ANTI-PATTERN: 4 independent queries run sequentially. Total = 1+1+0+0ms. Use Promise.all to parallelize."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 3.62,
+          "avgMs": 12.94,
+          "p50Ms": 11.84,
+          "p95Ms": 25.29,
+          "maxMs": 25.29
+        },
+        "service": {
+          "minMs": 1,
+          "avgMs": 1.83,
+          "p50Ms": 2,
+          "p95Ms": 3,
+          "maxMs": 3
+        },
+        "statuses": {
+          "200": 12
+        },
+        "sampleResponse": {
+          "queryTime": 1,
+          "breakdown": {
+            "userCount": 800,
+            "postCount": 16000,
+            "orderCount": 200,
+            "productCount": 25
+          },
+          "info": "GOOD: 4 concurrent queries via Promise.all. Total time ≈ slowest single query, not their sum."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 1.14,
+      "serviceSpeedup": 1.14
+    },
+    {
+      "name": "In-memory sort",
+      "bad": {
+        "wall": {
+          "minMs": 64.23,
+          "avgMs": 65.46,
+          "p50Ms": 65.2,
+          "p95Ms": 66.99,
+          "maxMs": 66.99
+        },
+        "service": {
+          "minMs": 26,
+          "avgMs": 28.83,
+          "p50Ms": 29,
+          "p95Ms": 31,
+          "maxMs": 31
+        },
+        "statuses": {
+          "200": 6
+        },
+        "sampleResponse": {
+          "count": 16000,
+          "queryTime": 26,
+          "sortTime": 3,
+          "warning": "ANTI-PATTERN: Fetched 16000 rows then sorted in JavaScript (3ms). At 1M rows: ~800MB heap allocation + ~3,000ms sort. The database has a sorted index — use orderBy and let it sort."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 7.43,
+          "avgMs": 8.03,
+          "p50Ms": 8.09,
+          "p95Ms": 8.35,
+          "maxMs": 8.35
+        },
+        "service": {
+          "minMs": 2,
+          "avgMs": 2.5,
+          "p50Ms": 2,
+          "p95Ms": 3,
+          "maxMs": 3
+        },
+        "statuses": {
+          "200": 6
+        },
+        "sampleResponse": {
+          "count": 20,
+          "queryTime": 3,
+          "info": "GOOD: orderBy delegated to DB, paginated (take: 20). Zero JavaScript sort overhead. Works in O(log n) with an index. Never loads more rows than needed into Node.js heap."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 8.15,
+      "serviceSpeedup": 11.53
+    },
+    {
+      "name": "Cold start",
+      "bad": {
+        "wall": {
+          "minMs": 4,
+          "avgMs": 4.71,
+          "p50Ms": 4.29,
+          "p95Ms": 5.77,
+          "maxMs": 5.77
+        },
+        "service": {
+          "minMs": 2,
+          "avgMs": 2.88,
+          "p50Ms": 3,
+          "p95Ms": 4,
+          "maxMs": 4
+        },
+        "statuses": {
+          "200": 8
+        },
+        "sampleResponse": {
+          "initTime": 2,
+          "queryTime": 0,
+          "totalTime": 2,
+          "warning": "ANTI-PATTERN: PrismaClient instantiated per invocation. Init+connect took 2ms. In true serverless (Lambda) with the Rust engine binary this is 500ms–2s on cold start. Solutions: Prisma Accelerate, singleton outside handler, or connection pooler."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 1.68,
+          "avgMs": 2.04,
+          "p50Ms": 1.86,
+          "p95Ms": 2.98,
+          "maxMs": 2.98
+        },
+        "service": {
+          "minMs": 0,
+          "avgMs": 0.75,
+          "p50Ms": 1,
+          "p95Ms": 1,
+          "maxMs": 1
+        },
+        "statuses": {
+          "200": 8
+        },
+        "sampleResponse": {
+          "queryTime": 1,
+          "info": "GOOD: Singleton PrismaService already connected at app bootstrap. Zero init overhead on each request. For true serverless: use Prisma Accelerate (connection proxy) or instantiate PrismaClient outside the handler function in the module scope."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 2.31,
+      "serviceSpeedup": 3.84,
+      "note": "This repo uses the better-sqlite3 driver adapter, so these numbers are local adapter startup costs, not serverless Rust-engine cold starts."
+    },
+    {
+      "name": "Max params",
+      "bad": {
+        "wall": {
+          "minMs": 1055.56,
+          "avgMs": 1055.56,
+          "p50Ms": 1055.56,
+          "p95Ms": 1055.56,
+          "maxMs": 1055.56
+        },
+        "service": {
+          "minMs": 1050,
+          "avgMs": 1050,
+          "p50Ms": 1050,
+          "p95Ms": 1050,
+          "maxMs": 1050
+        },
+        "statuses": {
+          "200": 1
+        },
+        "sampleResponse": {
+          "queryTime": 1050,
+          "inserted": 40000,
+          "warning": "ANTI-PATTERN: Single createMany with 40000 records. SQLite limit is 32,766 parameters (columns × rows). PostgreSQL limit is 65,535. Exceeding this throws a database error at runtime."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 1221.88,
+          "avgMs": 1221.88,
+          "p50Ms": 1221.88,
+          "p95Ms": 1221.88,
+          "maxMs": 1221.88
+        },
+        "service": {
+          "minMs": 1218,
+          "avgMs": 1218,
+          "p50Ms": 1218,
+          "p95Ms": 1218,
+          "maxMs": 1218
+        },
+        "statuses": {
+          "200": 1
+        },
+        "sampleResponse": {
+          "queryTime": 1218,
+          "inserted": 40000,
+          "info": "GOOD: Batched createMany in chunks of 500. 80 batches fired. Never exceeds DB parameter limits. Works for any dataset size."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 0.86,
+      "serviceSpeedup": 0.86
+    },
+    {
+      "name": "Unindexed WHERE",
+      "bad": {
+        "wall": {
+          "minMs": 17.07,
+          "avgMs": 19.15,
+          "p50Ms": 17.78,
+          "p95Ms": 23.61,
+          "maxMs": 23.61
+        },
+        "service": {
+          "minMs": 6,
+          "avgMs": 8.13,
+          "p50Ms": 7,
+          "p95Ms": 14,
+          "maxMs": 14
+        },
+        "statuses": {
+          "200": 8
+        },
+        "sampleResponse": {
+          "count": 8000,
+          "queryTime": 14,
+          "warning": "ANTI-PATTERN: WHERE on unindexed column `published`. SQLite/Postgres must scan the entire Post table. At 1M rows this query takes seconds. Add @@index([published]) to the schema."
+        },
+        "failures": []
+      },
+      "good": {
+        "wall": {
+          "minMs": 29.68,
+          "avgMs": 32.6,
+          "p50Ms": 29.91,
+          "p95Ms": 38.93,
+          "maxMs": 38.93
+        },
+        "service": {
+          "minMs": 12,
+          "avgMs": 14.75,
+          "p50Ms": 14,
+          "p95Ms": 21,
+          "maxMs": 21
+        },
+        "statuses": {
+          "200": 8
+        },
+        "sampleResponse": {
+          "count": 8000,
+          "queryTime": 21,
+          "info": "FIX: Add @@index([published, createdAt]) to Post model in schema.prisma. DB uses index seek instead of full table scan. Query time stays O(log n) regardless of table size."
+        },
+        "failures": []
+      },
+      "wallSpeedup": 0.59,
+      "serviceSpeedup": 0.55,
+      "note": "Bad run executed with the composite index dropped. Good run executed after CREATE INDEX ON Post(published, createdAt DESC)."
+    }
+  ],
+  "raceCondition": {
+    "requests": 100,
+    "startingStock": 150,
+    "badFinalStock": 50,
+    "goodFinalStock": 50,
+    "expectedFinalStock": 50,
+    "badLostUpdates": 0,
+    "goodLostUpdates": 0
+  }
+}

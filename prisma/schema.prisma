@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  posts     Post[]
+  orders    Order[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  published Boolean  @default(false)
+  views     Int      @default(0)
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  tags      Tag[]    @relation("PostTags")
+  createdAt DateTime @default(now())
+
+  // @@index([published])  <-- intentionally omitted to demo unindexed-where bottleneck
+  // Add this index to fix Bottleneck #11:
+  // @@index([published, createdAt])
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts Post[] @relation("PostTags")
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String
+  price      Float
+  stock      Int         @default(100)
+  orderItems OrderItem[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  totalPrice Float       @default(0)
+  status     String      @default("pending")
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}

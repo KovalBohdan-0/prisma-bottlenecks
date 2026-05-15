@@ -1,0 +1,218 @@
+{
+  "generatedAt": "2026-05-15T10:18:11.614Z",
+  "databaseUrl": "postgresql://postgres:postgres@127.0.0.1:54329/prisma_bench?schema=public",
+  "dataset": {
+    "users": 2000,
+    "postsPerUser": 30,
+    "posts": 60000,
+    "products": 100,
+    "orders": 1000
+  },
+  "scenarios": [
+    {
+      "name": "N+1 queries",
+      "bad": {
+        "minMs": 17682.36,
+        "avgMs": 18485.65,
+        "p50Ms": 17761.27,
+        "p95Ms": 20013.33,
+        "maxMs": 20013.33
+      },
+      "good": {
+        "minMs": 140.2,
+        "avgMs": 142.17,
+        "p50Ms": 140.71,
+        "p95Ms": 145.6,
+        "maxMs": 145.6
+      },
+      "speedup": 130.02,
+      "sample": {
+        "bad": {
+          "users": 2000,
+          "queryCount": 2001
+        },
+        "good": {
+          "users": 2000,
+          "queryCount": 2
+        }
+      }
+    },
+    {
+      "name": "Sequential await",
+      "bad": {
+        "minMs": 9.36,
+        "avgMs": 11.22,
+        "p50Ms": 10.4,
+        "p95Ms": 16.84,
+        "maxMs": 16.84
+      },
+      "good": {
+        "minMs": 5.25,
+        "avgMs": 8.54,
+        "p50Ms": 5.58,
+        "p95Ms": 32.17,
+        "maxMs": 32.17
+      },
+      "speedup": 1.31,
+      "sample": {
+        "bad": {
+          "userCount": 2000,
+          "postCount": 60000,
+          "orderCount": 1000,
+          "productCount": 100
+        },
+        "good": {
+          "userCount": 2000,
+          "postCount": 60000,
+          "orderCount": 1000,
+          "productCount": 100
+        }
+      }
+    },
+    {
+      "name": "In-memory sort",
+      "bad": {
+        "minMs": 183.72,
+        "avgMs": 194.73,
+        "p50Ms": 191.47,
+        "p95Ms": 214.53,
+        "maxMs": 214.53
+      },
+      "good": {
+        "minMs": 14.61,
+        "avgMs": 16.52,
+        "p50Ms": 15.56,
+        "p95Ms": 20.55,
+        "maxMs": 20.55
+      },
+      "speedup": 11.79,
+      "sample": {
+        "bad": {
+          "count": 60000
+        },
+        "good": {
+          "count": 20
+        }
+      }
+    },
+    {
+      "name": "Offset pagination",
+      "bad": {
+        "minMs": 8.19,
+        "avgMs": 8.35,
+        "p50Ms": 8.21,
+        "p95Ms": 8.69,
+        "maxMs": 8.69
+      },
+      "good": {
+        "minMs": 1.71,
+        "avgMs": 2.48,
+        "p50Ms": 1.87,
+        "p95Ms": 5.03,
+        "maxMs": 5.03
+      },
+      "speedup": 3.37,
+      "sample": {
+        "bad": {
+          "count": 20,
+          "firstId": 50001
+        },
+        "good": {
+          "count": 20,
+          "firstId": 50001
+        }
+      }
+    },
+    {
+      "name": "Long transactions",
+      "bad": {
+        "minMs": 495.48,
+        "avgMs": 504.18,
+        "p50Ms": 506.13,
+        "p95Ms": 510.94,
+        "maxMs": 510.94
+      },
+      "good": {
+        "minMs": 232.97,
+        "avgMs": 239.33,
+        "p50Ms": 233.22,
+        "p95Ms": 251.81,
+        "maxMs": 251.81
+      },
+      "speedup": 2.11,
+      "sample": {
+        "bad": {
+          "operations": 40,
+          "concurrency": 20
+        },
+        "good": {
+          "operations": 40,
+          "concurrency": 20
+        }
+      }
+    },
+    {
+      "name": "Indexed vs unindexed WHERE",
+      "bad": {
+        "minMs": 2.35,
+        "avgMs": 4.81,
+        "p50Ms": 2.5,
+        "p95Ms": 13.8,
+        "maxMs": 13.8
+      },
+      "good": {
+        "minMs": 3.99,
+        "avgMs": 22.91,
+        "p50Ms": 4.17,
+        "p95Ms": 97.69,
+        "maxMs": 97.69
+      },
+      "speedup": 0.21,
+      "sample": {
+        "bad": {
+          "count": 200
+        },
+        "good": {
+          "count": 200
+        }
+      }
+    },
+    {
+      "name": "Max parameters",
+      "bad": {
+        "minMs": 3254.69,
+        "avgMs": 3254.69,
+        "p50Ms": 3254.69,
+        "p95Ms": 3254.69,
+        "maxMs": 3254.69
+      },
+      "good": {
+        "minMs": 2367.08,
+        "avgMs": 2367.08,
+        "p50Ms": 2367.08,
+        "p95Ms": 2367.08,
+        "maxMs": 2367.08
+      },
+      "speedup": 1.37,
+      "sample": {
+        "bad": {
+          "inserted": 70000,
+          "failed": false
+        },
+        "good": {
+          "inserted": 70000,
+          "failed": false
+        }
+      }
+    }
+  ],
+  "raceCondition": {
+    "requests": 150,
+    "startingStock": 200,
+    "expectedFinalStock": 50,
+    "badFinalStock": 197,
+    "goodFinalStock": 50,
+    "badLostUpdates": 147,
+    "goodLostUpdates": 0
+  }
+}
